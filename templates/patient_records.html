@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Záznamy pacienta</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #0071e3;
+        }
+        h2 {
+            font-size: 1.75rem;
+            margin-top: 40px;
+        }
+        .record-table {
+            margin-bottom: 30px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e5e5;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f5f7;
+            font-weight: 600;
+        }
+        td {
+            background-color: #ffffff;
+        }
+        .back-link {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 30px;
+            background-color: #0071e3;
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        .back-link:hover {
+            background-color: #0056b3;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        button.delete-button {
+            background-color: #ff3b30;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button.delete-button:hover {
+            background-color: #e60000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Záznamy pacienta: {{ patient.first_name }} {{ patient.last_name }}</h1>
+        
+        <h2>Tepová frekvence</h2>
+        <table class="record-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Datum</th>
+                    <th>Přítomnost</th>
+                    <th>Frekvence</th>
+                    <th>Pravidelnost</th>
+                    <th>Typ nepravidelnosti</th>
+                    <th>Charakter</th>
+                    <th>Klinický popis</th>
+                    <th>Doktor</th>
+                    <th>Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pulse in pulses %}
+                <tr>
+                    <td>{{ pulse.pulse_id }}</td>
+                    <td>{{ pulse.measurement_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td>{{ 'Ano' if pulse.presence else 'Ne' }}</td>
+                    <td>{{ pulse.rate }}</td>
+                    <td>{{ pulse.regularity }}</td>
+                    <td>{{ pulse.irregular_type }}</td>
+                    <td>{{ pulse.character }}</td>
+                    <td>{{ pulse.clinical_description }}</td>
+                    <td>{{ pulse.doctor.first_name }} {{ pulse.doctor.last_name }}</td> 
+                    <td>
+                        <form action="/delete_record/pulse/{{ pulse.pulse_id }}" method="post" class="delete-form" onsubmit="return confirm('Opravdu chcete odstranit tento záznam?');">
+                            <button type="submit" class="delete-button">Odstranit</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <h2>Krevní tlak</h2>
+        <table class="record-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Datum</th>
+                    <th>Systolický</th>
+                    <th>Diastolický</th>
+                    <th>Průměrný arteriální tlak</th>
+                    <th>Pulzní tlak</th>
+                    <th>Klinická interpretace</th>
+                    <th>Doktor</th>
+                    <th>Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bp in blood_pressures %}
+                <tr>
+                    <td>{{ bp.bp_id }}</td>
+                    <td>{{ bp.measurement_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td>{{ bp.systolic }}</td>
+                    <td>{{ bp.diastolic }}</td>
+                    <td>{{ bp.mean_arterial_pressure }}</td>
+                    <td>{{ bp.pulse_pressure }}</td>
+                    <td>{{ bp.clinical_interpretation }}</td>
+                    <td>{{ bp.doctor.first_name }} {{ bp.doctor.last_name }}</td>
+                    <td>
+                        <form action="/delete_record/blood_pressure/{{ bp.bp_id }}" method="post" class="delete-form" onsubmit="return confirm('Opravdu chcete odstranit tento záznam?');">
+                            <button type="submit" class="delete-button">Odstranit</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <h2>Tělesná teplota</h2>
+        <table class="record-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Datum</th>
+                    <th>Teplota</th>
+                    <th>Vystavení těla</th>
+                    <th>Tepelný stres</td>
+                    <th>Den menstruačního cyklu</th>
+                    <th>Matoucí faktory</th>
+                    <th>Podmínky prostředí</th>
+                    <th>Doktor</th>
+                    <th>Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bt in body_temperatures %}
+                <tr>
+                    <td>{{ bt.temperature_id }}</td>
+                    <td>{{ bt.measurement_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td>{{ bt.temperature }}</td>
+                    <td>{{ bt.body_exposure }}</td>
+                    <td>{{ bt.thermal_stress }}</td>
+                    <td>{{ bt.menstrual_cycle_day }}</td>
+                    <td>{{ bt.confounding_factors }}</td>
+                    <td>{{ bt.environmental_conditions }}</td>
+                    <td>{{ bt.doctor.first_name }} {{ bt.doctor.last_name }}</td>
+                    <td>
+                        <form action="/delete_record/body_temperature/{{ bt.temperature_id }}" method="post" class="delete-form" onsubmit="return confirm('Opravdu chcete odstranit tento záznam?');">
+                            <button type="submit" class="delete-button">Odstranit</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <h2>Pulsní oxymetrie</h2>
+        <table class="record-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Datum</th>
+                    <th>SpO2</th>
+                    <th>SpOC</th>
+                    <th>SpCO</th>
+                    <th>SpMet</th>
+                    <th>Tvar vlny</th>
+                    <th>Interpretace</th>
+                    <th>Doktor</th>
+                    <th>Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for po in pulse_oximetries %}
+                <tr>
+                    <td>{{ po.oximetry_id }}</td>
+                    <td>{{ po.measurement_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td>{{ po.spo2 }}</td>
+                    <td>{{ po.spoc }}</td>
+                    <td>{{ po.spco }}</td>
+                    <td>{{ po.spmet }}</td>
+                    <td>{{ po.waveform }}</td>
+                    <td>{{ po.interpretation }}</td>
+                    <td>{{ po.doctor.first_name }} {{ po.doctor.last_name }}</td>
+                    <td>
+                        <form action="/delete_record/pulse_oximetry/{{ po.oximetry_id }}" method="post" class="delete-form" onsubmit="return confirm('Opravdu chcete odstranit tento záznam?');">
+                            <button type="submit" class="delete-button">Odstranit</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <h2>Dýchání</h2>
+        <table class="record-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Datum</th>
+                    <th>Přítomnost</th>
+                    <th>Rychlost</th>
+                    <th>Pravidelnost</th>
+                    <th>Hloubka</th>
+                    <th>Klinický popis</th>
+                    <th>Klinická interpretace</th>
+                    <th>Doktor</th>
+                    <th>Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in respirations %}
+                <tr>
+                    <td>{{ r.respiration_id }}</td>
+                    <td>{{ r.measurement_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td>{{ 'Ano' if r.presence else 'Ne' }}</td>
+                    <td>{{ r.rate }}</td>
+                    <td>{{ r.regularity }}</td>
+                    <td>{{ r.depth }}</td>
+                    <td>{{ r.clinical_description }}</td>
+                    <td>{{ r.clinical_interpretation }}</td>
+                    <td>{{ r.doctor.first_name }} {{ r.doctor.last_name }}</td>
+                    <td>
+                        <form action="/delete_record/respiration/{{ r.respiration_id }}" method="post" class="delete-form" onsubmit="return confirm('Opravdu chcete odstranit tento záznam?');">
+                            <button type="submit" class="delete-button">Odstranit</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <a href="/patients" class="back-link">Zpět na seznam pacientů</a>
+    </div>
+</body>
+</html>

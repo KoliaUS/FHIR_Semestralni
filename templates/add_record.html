@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <title>Přidat záznam</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 40px;
+            background-color: #f0f0f0;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 300px;
+        }
+        label {
+            margin-bottom: 5px;
+            display: block;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="number"],
+        input[type="datetime-local"],
+        select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #007aff;
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+    <script>
+        function updateMenstrualCycleField() {
+            const patients = {{ patients_data | tojson }};
+            const patientSelect = document.getElementById('patient_id');
+            const menstrualCycleField = document.getElementById('menstrual_cycle_field');
+            const selectedPatientId = parseInt(patientSelect.value);
+            const selectedPatient = patients.find(patient => patient.patient_id === selectedPatientId);
+
+            if (selectedPatient && selectedPatient.gender === 'Female') {
+                menstrualCycleField.classList.remove('hidden');
+            } else {
+                menstrualCycleField.classList.add('hidden');
+            }
+        }
+
+        function calculatePressures() {
+            const systolic = parseFloat(document.getElementById('systolic').value);
+            const diastolic = parseFloat(document.getElementById('diastolic').value);
+            if (!isNaN(systolic) && !isNaN(diastolic)) {
+                const meanArterialPressure = ((2 * diastolic) + systolic) / 3;
+                const pulsePressure = systolic - diastolic;
+                document.getElementById('mean_arterial_pressure').value = meanArterialPressure.toFixed(2);
+                document.getElementById('pulse_pressure').value = pulsePressure.toFixed(2);
+            }
+        }
+
+    
+    $(document).ready(function() {
+        $('#regularity').change(function() {
+            if ($(this).val() == 'Irregular') {
+                $('#irregular_type').prop('disabled', false);
+            } else {
+                $('#irregular_type').prop('disabled', true);
+            }
+        });
+    });
+    
+        
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('systolic').addEventListener('input', calculatePressures);
+            document.getElementById('diastolic').addEventListener('input', calculatePressures);
+            document.getElementById('regularity').addEventListener('change', updateIrregularTypeField);
+        });
+    </script>
+</head>
+<body onload="updateMenstrualCycleField()">
+    <form action="/add_record/{{ record_type }}" method="post">
+        <h1 style="text-align: center;">Přidat {{ record_type | replace('_', ' ') }}</h1>
+
+        <label for="patient_id">Pacient:</label>
+        <select id="patient_id" name="patient_id" required onchange="updateMenstrualCycleField()">
+            {% for patient in patients %}
+            <option value="{{ patient.patient_id }}">{{ patient.first_name }} {{ patient.last_name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="doctor_id">Doktor:</label>
+        <select id="doctor_id" name="doctor_id" required>
+            {% for doctor in doctors %}
+            <option value="{{ doctor.doctor_id }}">{{ doctor.first_name }} {{ doctor.last_name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="measurement_date">Datum měření:</label>
+        <input type="datetime-local" id="measurement_date" name="measurement_date" required>
+
+        {% if record_type == 'pulse' %}
+            <label for="presence">Přítomnost:</label>
+            <select id="presence" name="presence" required>
+                <option value="true">Ano</option>
+                <option value="false">Ne</option>
+            </select>
+
+            <label for="rate">Tepová frekvence:</label>
+            <input type="number" id="rate" name="rate">
+
+            <label for="regularity">Pravidelnost:</label>
+            <select id="regularity" name="regularity">
+                <option value="Regular">Pravidelná</option>
+                <option value="Irregular">Nepravidelná</option>
+            </select>
+
+            <label for="irregular_type">Typ nepravidelnosti:</label>
+            <select id="irregular_type" name="irregular_type" disabled>
+                <option value="Regularly Irregular">Pravidelně nepravidelná</option>
+                <option value="Irregularly Irregular">Nepravidelně nepravidelná</option>
+            </select>
+
+            <label for="character">Charakter:</label>
+            <input type="text" id="character" name="character">
+
+            <label for="clinical_description">Klinický popis:</label>
+            <input type="text" id="clinical_description" name="clinical_description">
+        {% elif record_type == 'blood_pressure' %}
+            <label for="systolic">Systolický tlak:</label>
+            <input type="number" id="systolic" name="systolic" required>
+
+            <label for="diastolic">Diastolický tlak:</label>
+            <input type="number" id="diastolic" name="diastolic" required>
+
+            <label for="mean_arterial_pressure">Průměrný arteriální tlak:</label>
+            <input type="number" id="mean_arterial_pressure" name="mean_arterial_pressure" readonly>
+
+            <label for="pulse_pressure">Pulzní tlak:</label>
+            <input type="number" id="pulse_pressure" name="pulse_pressure" readonly>
+
+            <label for="clinical_interpretation">Klinická interpretace:</label>
+            <input type="text" id="clinical_interpretation" name="clinical_interpretation">
+        {% elif record_type == 'body_temperature' %}
+            <label for="temperature">Teplota:</label>
+            <input type="number" step="0.1" id="temperature" name="temperature">
+
+            <label for="body_exposure">Vystavení těla:</label>
+            <select id="body_exposure" name="body_exposure">
+                <option value="Naked">Bez oblečení</option>
+                <option value="Snížené oblečení/přikrývka">Snížené oblečení/přikrývka [Osoba je pokryta menším množstvím oblečení nebo přikrývky, než je považováno za vhodné pro dané prostředí]</option>
+                <option value="Vhodné oblečení/přikrývka">Vhodné oblečení/přikrývka [Osoba je pokryta množstvím oblečení nebo přikrývky, které je považováno za vhodné pro dané prostředí]</option>
+                <option value="Zvýšené oblečení/přikrývka">Zvýšené oblečení/přikrývka [Osoba je pokryta zvýšeným množstvím oblečení nebo přikrývky, než je považováno za vhodné pro dané prostředí]</option>
+            </select>
+
+            <label for="thermal_stress">Tepelný stres:</label>
+            <input type="text" id="thermal_stress" name="thermal_stress">
+
+            <div id="menstrual_cycle_field" class="hidden">
+                <label for="menstrual_cycle_day">Den menstruačního cyklu:</label>
+                <input type="number" id="menstrual_cycle_day" name="menstrual_cycle_day">
+            </div>
+
+            <label for="confounding_factors">Matoucí faktory:</label>
+            <input type="text" id="confounding_factors" name="confounding_factors">
+
+            <label for="environmental_conditions">Podmínky prostředí:</label>
+            <input type="text" id="environmental_conditions" name="environmental_conditions">
+            {% elif record_type == 'pulse_oximetry' %}
+            <label for="spo2">SpO2:</label>
+            <input type="number" step="0.01" id="spo2" name="spo2">
+
+            <label for="spoc">SpOC:</label>
+            <input type="number" step="0.01" id="spoc" name="spoc">
+
+            <label for="spco">SpCO:</label>
+            <input type="number" step="0.01" id="spco" name="spco">
+
+            <label for="spmet">SpMet:</label>
+            <input type="number" step="0.01" id="spmet" name="spmet">
+
+            <label for="waveform">Tvar vlny:</label>
+            <select id="waveform" name="waveform">
+                <option value="Sinusový">Sinusový</option>
+                <option value="Plochý">Plochý</option>
+                <option value="Špičatý">Špičatý</option>
+                <option value="Nepravidelný">Nepravidelný</option>
+                <option value="Dikrotický">Dikrotický</option>
+            </select>
+
+            <label for="interpretation">Interpretace:</label>
+            <input type="text" id="interpretation" name="interpretation">
+            {% elif record_type == 'respiration' %}
+            <label for="presence">Přítomnost:</label>
+            <select id="presence" name="presence" required>
+                <option value="true">Přítomna [Respirační pohyby jsou pozorovány]</option>
+                <option value="false">Nepřítomna [Respirační pohyby nejsou pozorovány]</option>
+            </select>
+
+            <label for="rate">Rychlost:</label>
+            <input type="number" id="rate" name="rate">
+
+            <label for="regularity">Pravidelnost:</label>
+            <select id="regularity" name="regularity">
+                <option value="Pravidelná">Pravidelná [Dýchací vzor je pravidelný]</option>
+                <option value="Nepravidelná">Nepravidelná [Dýchací vzor není pravidelný]</option>
+            </select>
+
+            <label for="depth">Hloubka:</label>
+            <select id="depth" name="depth">
+                <option value="Normální">Normální [Normální hloubka dýchání]</option>
+                <option value="Mělké">Mělké [Mělká hloubka dýchání]</option>
+                <option value="Hluboké">Hluboké [Hluboká hloubka dýchání]</option>
+                <option value="Proměnlivé">Proměnlivé [Proměnlivá hloubka dýchání]</option>
+            </select>
+
+            <label for="clinical_description">Klinický popis:</label>
+            <input type="text" id="clinical_description" name="clinical_description">
+
+            <label for="clinical_interpretation">Klinická interpretace:</label>
+            <input type="text" id="clinical_interpretation" name="clinical_interpretation">
+        {% endif %}
+
+        <input type="submit" value="Odeslat">
+    </form>
+</body>
+</html>
